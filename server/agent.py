@@ -19,6 +19,7 @@ from livekit.agents.llm import ImageContent
 from livekit.agents import function_tool, Agent, RunContext
 import moondream as md
 from PIL import Image
+import asyncio
 
 load_dotenv()
 
@@ -87,12 +88,14 @@ class Assistant(Agent):
         context: RunContext,
     ) -> dict:
         """Get a description of what the user is seeing"""
+        await context.session.say("I'm analyzing the image you shared. This may take a moment...")
         model = md.vl(api_key=os.getenv("MOONDREAM_API_KEY"))
-        # image = await context.get_latest_image()
         image = Image.open("../images/port_authority.jpg")
         caption_response = model.caption(image, length="short")
-        return {"moondream_caption": caption_response["caption"]}
-
+        return { 
+            "image_description": caption_response["caption"],
+            "analysis_complete": True
+        }
 
 async def entrypoint(ctx: agents.JobContext):
     session = AgentSession(
