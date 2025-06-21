@@ -22,6 +22,11 @@ from PIL import Image
 import asyncio
 
 load_dotenv()
+voice_instructions = """
+Accent/Affect: Professional, approachable, and confident.
+
+Tone: Clear, precise, and analytical, while maintaining an encouraging demeanor;
+"""
 
 
 class Assistant(Agent):
@@ -120,7 +125,11 @@ async def entrypoint(ctx: agents.JobContext):
     session = AgentSession(
         stt=deepgram.STT(model="nova-3", language="multi"),
         llm=openai.LLM(model="gpt-4o-mini"),
-        tts=cartesia.TTS(model="sonic-2", voice="f786b574-daa5-4673-aa0c-cbe3e8534c02"),
+        tts=openai.TTS(
+            model="gpt-4o-mini-tts",
+            voice="sage",
+            instructions=voice_instructions,
+        ),
         vad=silero.VAD.load(),
         turn_detection=MultilingualModel(),
     )
