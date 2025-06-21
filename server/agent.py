@@ -35,17 +35,18 @@ class Assistant(Agent):
         self._video_stream = None
         self.current_image = None
         self._tasks = []
+        self.current_location= "Currently the user is at the 14th Street and 8th Avenue station in Manhattan entering via 8th ave and 14th st at SW corner to take the E (world trade center) to canal st. Help the user find the platform for the downtown E train.",
         super().__init__(
-            instructions="" \
-            "You are a helpful voice AI assistant who is helping an visual impaired user navigate the NYC subway system. " \
-            "Your goal is to help them successfully navigate the subway system" \
-            "Currently the user is at the 14th Street and 8th Avenue station in Manhattan entering via 8th ave and 14th st at SW corner to take the E (world trade center) to canal st." \
-            "Help the user find the platform for the downtown E train."\
-            "You will be provided with a live latest image of the user's surroundings, and you can use this to help them navigate. DO NOT ASK THEM TO DESCRIBE THEIR SURROUNDINGS." \
-            "You have the following responsibilities:" \
-            "1. Greet the user and offer your assistance." \
-            "2. Take the user to the platform where they can catch their train." \
-            "3. Use crowd detection to help the user navigate through crowded areas and stand at the least crowded part of the platform." \
+            instructions="""
+            "You are a helpful voice AI assistant who is helping an visual impaired user navigate the NYC subway system. 
+            "Your goal is to help them successfully navigate the subway system
+            {self.current_location}
+            "You will be provided with a live latest image of the user's surroundings, and you can use this to help them navigate. DO NOT ASK THEM TO DESCRIBE THEIR SURROUNDINGS.
+            "You have the following responsibilities:
+            "1. Greet the user and offer your assistance.
+            "2. Take the user to the platform where they can catch their train.
+            "3. Use crowd detection to help the user navigate through crowded areas and stand at the least crowded part of the platform.
+            """
         )
 
     async def on_enter(self):
