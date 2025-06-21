@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+import os
 
 from livekit import agents
 from livekit.agents import AgentSession, Agent, RoomInputOptions
@@ -11,6 +12,8 @@ from livekit.plugins import (
 )
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 from livekit.agents import function_tool, Agent, RunContext
+import moondream as md 
+from PIL import Image
 
 load_dotenv()
 
@@ -24,8 +27,11 @@ class Assistant(Agent):
         context: RunContext,
     ) -> dict:
         """Get a description of what the user is seeing"""
-
-        return {"name": "John Doe", "email": "john.doe@example.com"}
+        model = md.vl(api_key=os.getenv("MOONDREAM_API_KEY"))
+        # image = await context.get_latest_image()
+        image = Image.open("../images/port_authority.jpg")
+        caption_response = model.caption(image, length="short")
+        return {"moondream_caption": caption_response["caption"]}
 
 
 async def entrypoint(ctx: agents.JobContext):
@@ -51,7 +57,7 @@ async def entrypoint(ctx: agents.JobContext):
     await ctx.connect()
 
     await session.generate_reply(
-        instructions="Greet the user and offer your assistance."
+        instructions="READ IMAGE then Greet the user and offer your assistance."
     )
 
 
