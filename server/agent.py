@@ -98,12 +98,16 @@ class Assistant(Agent):
 
     @function_tool
     async def view_latest_image(
+        self,
         context: RunContext,
     ) -> dict:
         """Get a description of what the user is seeing"""
         await context.session.say("I'm analyzing the image you shared. This may take a moment...")
         model = md.vl(api_key=os.getenv("MOONDREAM_API_KEY"))
-        image = Image.open("../images/port_authority.jpg")
+        image = self._latest_frame
+        if image is None:
+            await context.session.say("I don't have access to video feed. Please share your camera.")
+            return {}
         result = model.query(image, "What's in this image?")
         return { 
             "image_description": result["answer"],
@@ -111,12 +115,16 @@ class Assistant(Agent):
     
     @function_tool
     async def crowd_detection(
+        self,
         context: RunContext,
     ) -> dict:
         """How many crowds are in the image"""
         await context.session.say("I'm analyzing the image you shared. This may take a moment...")
         model = md.vl(api_key=os.getenv("MOONDREAM_API_KEY"))
-        image = Image.open("../images/port_authority.jpg")
+        image = self._latest_frame
+        if image is None:
+            await context.session.say("I don't have access to video feed. Please share your camera.")
+            return {}
         result = model.query(image, "Where are the crowds in this image? Where is the least crowded area?")
         return { 
             "image_description": result["answer"],
