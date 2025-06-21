@@ -30,7 +30,14 @@ class Assistant(Agent):
         self._video_stream = None
         self._tasks = []
         super().__init__(
-            instructions="You are a helpful voice AI assistant who is helping an visual impaired user navigate the NYC subway system. Your goal is to help them successfully navigate the subway system and find their train."
+            instructions="" \
+            "You are a helpful voice AI assistant who is helping an visual impaired user navigate the NYC subway system. " \
+            "Your goal is to help them successfully navigate the subway system and find their train."
+            "You will be provided with a live latest image of the user's surroundings, and you can use this to help them navigate." \
+            "You have the following responsibilities:" \
+            "1. Greet the user and offer your assistance." \
+            "2. Take the user to the platform where they can catch their train." \
+            "3. Use crowd detection to help the user navigate through crowded areas and stand at the least crowded part of the platform." \
         )
 
     async def on_enter(self):
@@ -91,10 +98,22 @@ class Assistant(Agent):
         await context.session.say("I'm analyzing the image you shared. This may take a moment...")
         model = md.vl(api_key=os.getenv("MOONDREAM_API_KEY"))
         image = Image.open("../images/port_authority.jpg")
-        caption_response = model.caption(image, length="short")
+        result = model.query(image, "What's in this image?")
         return { 
-            "image_description": caption_response["caption"],
-            "analysis_complete": True
+            "image_description": result["answer"],
+        }
+    
+    @function_tool
+    async def crowd_detection(
+        context: RunContext,
+    ) -> dict:
+        """How many crowds are in the image"""
+        await context.session.say("I'm analyzing the image you shared. This may take a moment...")
+        model = md.vl(api_key=os.getenv("MOONDREAM_API_KEY"))
+        image = Image.open("../images/port_authority.jpg")
+        result = model.query(image, "Where are the crowds in this image? Where is the least crowded area?")
+        return { 
+            "image_description": result["answer"],
         }
 
 async def entrypoint(ctx: agents.JobContext):
