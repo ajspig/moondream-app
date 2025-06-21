@@ -10,6 +10,7 @@ from livekit.plugins import (
     silero,
 )
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
+from livekit.agents import function_tool, Agent, RunContext
 
 load_dotenv()
 
@@ -17,6 +18,14 @@ load_dotenv()
 class Assistant(Agent):
     def __init__(self) -> None:
         super().__init__(instructions="You are a helpful voice AI assistant.")
+
+    @function_tool
+    async def view_latest_image(
+        context: RunContext,
+    ) -> dict:
+        """Get a description of what the user is seeing"""
+
+        return {"name": "John Doe", "email": "john.doe@example.com"}
 
 
 async def entrypoint(ctx: agents.JobContext):
