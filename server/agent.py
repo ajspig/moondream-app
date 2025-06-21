@@ -22,6 +22,11 @@ from PIL import Image
 import asyncio
 
 load_dotenv()
+voice_instructions = """
+Accent/Affect: Professional, approachable, and confident.
+
+Tone: Clear, precise, and analytical, while maintaining an encouraging demeanor;
+"""
 
 
 class Assistant(Agent):
@@ -93,12 +98,16 @@ class Assistant(Agent):
 
     @function_tool
     async def view_latest_image(
+        self,
         context: RunContext,
     ) -> dict:
         """Get a description of what the user is seeing"""
         await context.session.say("I'm analyzing the image you shared. This may take a moment...")
         model = md.vl(api_key=os.getenv("MOONDREAM_API_KEY"))
-        image = Image.open("../images/port_authority.jpg")
+        image = self._latest_frame
+        if image is None:
+            await context.session.say("I don't have access to video feed. Please share your camera.")
+            return {}
         result = model.query(image, "What's in this image?")
         return { 
             "image_description": result["answer"],
@@ -106,12 +115,16 @@ class Assistant(Agent):
     
     @function_tool
     async def crowd_detection(
+        self,
         context: RunContext,
     ) -> dict:
         """How many crowds are in the image"""
         await context.session.say("I'm analyzing the image you shared. This may take a moment...")
         model = md.vl(api_key=os.getenv("MOONDREAM_API_KEY"))
-        image = Image.open("../images/port_authority.jpg")
+        image = self._latest_frame
+        if image is None:
+            await context.session.say("I don't have access to video feed. Please share your camera.")
+            return {}
         result = model.query(image, "Where are the crowds in this image? Where is the least crowded area?")
         return { 
             "image_description": result["answer"],
@@ -121,7 +134,11 @@ async def entrypoint(ctx: agents.JobContext):
     session = AgentSession(
         stt=deepgram.STT(model="nova-3", language="multi"),
         llm=openai.LLM(model="gpt-4o-mini"),
-        tts=cartesia.TTS(model="sonic-2", voice="f786b574-daa5-4673-aa0c-cbe3e8534c02"),
+        tts=openai.TTS(
+            model="gpt-4o-mini-tts",
+            voice="sage",
+            instructions=voice_instructions,
+        ),
         vad=silero.VAD.load(),
         turn_detection=MultilingualModel(),
     )
