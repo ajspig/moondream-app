@@ -228,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   )
-                  : _buildVideoFeedLayout(context, roomCtx, deviceScreenType),
+                  : _VideoFeedLayout(roomContext: roomCtx, deviceScreenType: deviceScreenType),
 
               /// show toast widget
               const Positioned(top: 30, left: 0, right: 0, child: ToastWidget()),
@@ -238,24 +238,39 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
+}
 
-  Widget _buildVideoFeedLayout(BuildContext context, RoomContext roomCtx, DeviceScreenType deviceScreenType) {
+class _VideoFeedLayout extends StatelessWidget {
+  final RoomContext roomContext;
+  final DeviceScreenType deviceScreenType;
+
+  const _VideoFeedLayout({required this.roomContext, required this.deviceScreenType});
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
         /// show chat widget on mobile
-        (deviceScreenType == DeviceScreenType.mobile && roomCtx.isChatEnabled)
-            ? Expanded(child: _buildChatWidget(roomCtx))
-            : Expanded(flex: 6, child: _buildMainVideoArea(roomCtx)),
+        (deviceScreenType == DeviceScreenType.mobile && roomContext.isChatEnabled)
+            ? Expanded(child: _ChatWidgetContainer(roomContext: roomContext))
+            : Expanded(flex: 6, child: _MainVideoArea(roomContext: roomContext)),
 
         /// show chat widget on desktop
-        (deviceScreenType != DeviceScreenType.mobile && roomCtx.isChatEnabled)
-            ? Expanded(flex: 2, child: SizedBox(width: 400, child: _buildChatWidget(roomCtx)))
+        (deviceScreenType != DeviceScreenType.mobile && roomContext.isChatEnabled)
+            ? Expanded(flex: 2, child: SizedBox(width: 400, child: _ChatWidgetContainer(roomContext: roomContext)))
             : const SizedBox(width: 0, height: 0),
       ],
     );
   }
+}
 
-  Widget _buildChatWidget(RoomContext roomCtx) {
+class _ChatWidgetContainer extends StatelessWidget {
+  final RoomContext roomContext;
+
+  const _ChatWidgetContainer({required this.roomContext});
+
+  @override
+  Widget build(BuildContext context) {
     return ChatBuilder(
       builder: (context, enabled, chatCtx, messages) {
         return ChatWidget(
@@ -268,8 +283,15 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
+}
 
-  Widget _buildMainVideoArea(RoomContext roomCtx) {
+class _MainVideoArea extends StatelessWidget {
+  final RoomContext roomContext;
+
+  const _MainVideoArea({required this.roomContext});
+
+  @override
+  Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
         /// show participant loop
@@ -279,11 +301,12 @@ class _HomeScreenState extends State<HomeScreen> {
           showParticipantPlaceholder: true,
 
           /// layout builder
-          layoutBuilder: roomCtx.pinnedTracks.isNotEmpty ? const CarouselLayoutBuilder() : const GridLayoutBuilder(),
+          layoutBuilder:
+              roomContext.pinnedTracks.isNotEmpty ? const CarouselLayoutBuilder() : const GridLayoutBuilder(),
 
           /// participant builder
           participantTrackBuilder: (context, identifier) {
-            return _buildParticipantTile(context, identifier, roomCtx);
+            return _ParticipantTile(identifier: identifier, roomContext: roomContext);
           },
         ),
 
@@ -292,14 +315,22 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
   }
+}
 
-  Widget _buildParticipantTile(BuildContext context, identifier, RoomContext roomCtx) {
+class _ParticipantTile extends StatelessWidget {
+  final dynamic identifier;
+  final RoomContext roomContext;
+
+  const _ParticipantTile({required this.identifier, required this.roomContext});
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(2.0),
       child: Stack(
         children: [
           /// video track widget in the background
-          identifier.isAudio && roomCtx.enableAudioVisulizer
+          identifier.isAudio && roomContext.enableAudioVisulizer
               ? const AudioVisualizerWidget(backgroundColor: LKColors.lkDarkBlue)
               : IsSpeakingIndicator(
                 builder: (context, isSpeaking) {
