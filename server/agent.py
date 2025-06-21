@@ -33,23 +33,24 @@ class Assistant(Agent):
     def __init__(self) -> None:
         self._latest_frame = None
         self._video_stream = None
+        self.current_image = None
         self._tasks = []
         super().__init__(
-            instructions="" \
-            "You are a helpful voice AI assistant who is helping an visual impaired user navigate the NYC subway system. " \
+            instructions=""
+            "You are a helpful voice AI assistant who is helping an visual impaired user navigate the NYC subway system. "
             "Your goal is to help them successfully navigate the subway system and find their train."
-            "You will be provided with a live latest image of the user's surroundings, and you can use this to help them navigate." \
-            "You have the following responsibilities:" \
-            "1. Greet the user and offer your assistance." \
-            "2. Take the user to the platform where they can catch their train." \
-            "3. Use crowd detection to help the user navigate through crowded areas and stand at the least crowded part of the platform." \
+            "You will be provided with a live latest image of the user's surroundings, and you can use this to help them navigate."
+            "You have the following responsibilities:"
+            "1. Greet the user and offer your assistance."
+            "2. Take the user to the platform where they can catch their train."
+            "3. Use crowd detection to help the user navigate through crowded areas and stand at the least crowded part of the platform."
         )
 
     async def on_enter(self):
         room = get_job_context().room
 
         # Find the first video track (if any) from the remote participant
-        if room.remote_participants.values().length > 0:
+        if len(list(room.remote_participants.values())) > 0:
             remote_participant = list(room.remote_participants.values())[0]
             video_tracks = [
                 publication.track
@@ -74,7 +75,8 @@ class Assistant(Agent):
     ) -> None:
         # Add the latest video frame, if any, to the new message
         if self._latest_frame:
-            new_message.content.append(ImageContent(image=self._latest_frame))
+            self.current_image = self._latest_frame
+            # new_message.content.append(ImageContent(image=self._latest_frame))
             self._latest_frame = None
 
     # Helper method to buffer the latest video frame from the user's track
@@ -102,33 +104,45 @@ class Assistant(Agent):
         context: RunContext,
     ) -> dict:
         """Get a description of what the user is seeing"""
-        await context.session.say("I'm analyzing the image you shared. This may take a moment...")
+        await context.session.say(
+            "I'm analyzing the image you shared. This may take a moment..."
+        )
         model = md.vl(api_key=os.getenv("MOONDREAM_API_KEY"))
-        image = self._latest_frame
+        image = self.current_image
         if image is None:
-            await context.session.say("I don't have access to video feed. Please share your camera.")
+            await context.session.say(
+                "I don't have access to video feed. Please share your camera."
+            )
             return {}
         result = model.query(image, "What's in this image?")
-        return { 
+        return {
             "image_description": result["answer"],
         }
-    
+
     @function_tool
     async def crowd_detection(
         self,
         context: RunContext,
     ) -> dict:
         """How many crowds are in the image"""
-        await context.session.say("I'm analyzing the image you shared. This may take a moment...")
+        await context.session.say(
+            "I'm analyzing the image you shared. This may take a moment..."
+        )
         model = md.vl(api_key=os.getenv("MOONDREAM_API_KEY"))
-        image = self._latest_frame
+        image = self.current_image
         if image is None:
-            await context.session.say("I don't have access to video feed. Please share your camera.")
+            await context.session.say(
+                "I don't have access to video feed. Please share your camera."
+            )
             return {}
-        result = model.query(image, "Where are the crowds in this image? Where is the least crowded area?")
-        return { 
+        result = model.query(
+            image,
+            "Where are the crowds in this image? Where is the least crowded area?",
+        )
+        return {
             "image_description": result["answer"],
         }
+
 
 async def entrypoint(ctx: agents.JobContext):
     session = AgentSession(
