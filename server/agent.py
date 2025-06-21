@@ -49,24 +49,25 @@ class Assistant(Agent):
         room = get_job_context().room
 
         # Find the first video track (if any) from the remote participant
-        remote_participant = list(room.remote_participants.values())[0]
-        video_tracks = [
-            publication.track
-            for publication in list(remote_participant.track_publications.values())
-            if publication.track.kind == rtc.TrackKind.KIND_VIDEO
-        ]
-        if video_tracks:
-            self._create_video_stream(video_tracks[0])
+        if room.remote_participants.values().length > 0:
+            remote_participant = list(room.remote_participants.values())[0]
+            video_tracks = [
+                publication.track
+                for publication in list(remote_participant.track_publications.values())
+                if publication.track.kind == rtc.TrackKind.KIND_VIDEO
+            ]
+            if video_tracks:
+                self._create_video_stream(video_tracks[0])
 
-        # Watch for new video tracks not yet published
-        @room.on("track_subscribed")
-        def on_track_subscribed(
-            track: rtc.Track,
-            publication: rtc.RemoteTrackPublication,
-            participant: rtc.RemoteParticipant,
-        ):
-            if track.kind == rtc.TrackKind.KIND_VIDEO:
-                self._create_video_stream(track)
+            # Watch for new video tracks not yet published
+            @room.on("track_subscribed")
+            def on_track_subscribed(
+                track: rtc.Track,
+                publication: rtc.RemoteTrackPublication,
+                participant: rtc.RemoteParticipant,
+            ):
+                if track.kind == rtc.TrackKind.KIND_VIDEO:
+                    self._create_video_stream(track)
 
     async def on_user_turn_completed(
         self, turn_ctx: ChatContext, new_message: ChatMessage
